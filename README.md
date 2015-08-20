@@ -3,6 +3,17 @@
 
 Running Docker in a Travis CI build.
 
+---
+
+### [Travis now officially supports Docker !](http://docs.travis-ci.com/user/docker/)
+
+This project is now deprecated, but the resources may be useful:
+
+* as an example to create Docker workspaces on environments with constraints
+* to use a specific version of Docker or a specific daemon configuration on Travis
+
+---
+
 ![](https://github.com/moul/travis-docker/raw/master/assets/logo.png)
 
 `./run` script will run commands in a user-land linux with `docker` and
@@ -14,6 +25,8 @@ Running Docker in a Travis CI build.
 Simple
 
 ```yaml
+sudo: true
+
 install:
   - curl -sLo - http://j.mp/install-travis-docker | sh -xe
 
@@ -24,16 +37,22 @@ script:
 Advanced
 
 ```yaml
+sudo: true                  # Required to install packages
+
 env:
   global:
-    - BRANCH=stable
-    - QUIET=1
-    - UML_FIG=0
-    - UML_DOCKERCOMPOSE=1
+    - DOCKER_VERSION=1.7.1  # Install Docker version 1.7.1
+    - DOCKER_VERSION=get.docker.com  # Install Docker using get.docker.com (may break)
 
-sudo: true
+    - BRANCH=stable         # Use 'stable' branch
+    - BRANCH=develop        # Use 'develop' branch
+
+    - QUIET=1               # Less verbose logging
+    - UML_FIG=0             # Don't install fig
+    - UML_DOCKERCOMPOSE=1   # Install docker-compose
 
 install:
+  # Install https://github.com/moul/travis-docker toolchain
   - curl -sLo - http://j.mp/install-travis-docker | sh -xe
 
 script:
@@ -50,18 +69,61 @@ You can find more examples on [travis-docker-example](https://github.com/moul/tr
 
 ## Environment variables
 
+* `DOCKER_VERSION=1.8.0-rc2`, default is `1.7.1`, available values are all the
+  Docker releases + `get.docker.com` for docker's install script
 * `DOCKER_STORAGE_DRIVER=aufs`, default is `devicemapper`, available values are
   `aufs`, `btrfs`, `devicemapper`, `vfs`, `overlay`
 * `UML_DOCKERCOMPOSE=0`, do not install `docker-compose`
 * `UML_FIG=0`, do not install `fig`
 * `QUIET=1`, be less verbose
 
+## sudo requirement
+
+As you probably noticed, the examples above contained the line `sudo: true`.
+Travis is [moving towards a new infrastructure](http://docs.travis-ci.com/user/migrating-from-legacy/)
+where `sudo` is not supported (yet?).
+That line ensures that your project will state that your project requires `sudo`
+(as travis-docker does) and should therefore not be run on the new infrastructure.
+For existing projects, which have a history of runs on Travis,
+the old infrastructure might get used even without that line.
+So it *might* be unneccessary for your project.
+But since the line also affects people forking your project,
+you probably shouldn't rely on that compatibility,
+but instead make your requirements explicit.
 
 ---
 
 ## Changelog
 
-### v1.0.0 (2015-06-02) (BRANCH=v1.0.0 or BRANCH=stable)
+### v1.1.0 (2015-07-30) (`BRANCH=v1.1.0` or `BRANCH=stable`)
+
+* The Docker version can now be choose
+* Improved documentation (sudo, yaml)
+* Improved install script
+
+usage: .travis.yml
+
+```yaml
+env:
+  global:
+    - BRANCH=v1.1.0
+
+sudo: true
+
+install:
+  - curl -sLo - http://j.mp/install-travis-docker | sh -xe
+
+script:
+  - ./run 'docker build -t test . && docker run test'
+  - ./run 'docker-compose up -d blog && docker ps'
+```
+
+[Full changelog](https://github.com/moul/travis-docker/compare/v1.0.0...v1.1.0)
+
+### v1.0.0 (2015-06-02) (`BRANCH=v1.0.0`)
+
+Update (2015-07-30): this version is now unstable due to
+[Docker's new install script](http://blog.docker.com/2015/07/new-apt-and-yum-repos/).
 
 First stable version
 
